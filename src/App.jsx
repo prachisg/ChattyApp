@@ -31,15 +31,22 @@ class App extends Component {
     websocket.onopen = (event) => {
       console.log('Connected to server', event);
     }
+
+    websocket.onmessage = (event) => {
+      console.log('Incoming message', event.data);
+      const incomingMessage = JSON.parse(event.data);
+      const messages = this.state.messages.concat(incomingMessage);
+      this.setState({messages: messages});
+    }
     //setupApp(websocket);
   }
 
   onNewMessage(msg) {
+    // if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
     //console.log('New message', msg.content);
     const newMessage = {id: makeId(), username: msg.name, content: msg.content};
     this.socket.send(JSON.stringify(newMessage));
-    const messages = this.state.messages.concat(newMessage)
-    this.setState({messages: messages})
+
 
     // const output = 'User '+ this.state.messages[messages.length - 1].username + ' said ' + this.state.messages[messages.length - 1].content;
     // console.log(output);
