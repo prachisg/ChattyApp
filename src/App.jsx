@@ -10,16 +10,7 @@ class App extends Component {
 
     this.state = {
         currentUser: {name: 'Bob'}, // optional. if currentUser is not defined, it means the user is Anonymous
-        messages: [
-          // { id: makeId(),
-          //   username: 'Bob',
-          //   content: 'Has anyone seen my marbles?'
-          // }
-          // { id: makeId(),
-          //   username: 'Anonymous',
-          //   content: 'No, I think you lost them. You lost your marbles Bob. You lost them for good.'
-          // }
-        ]
+        messages: []
       }
 
       this.onNewMessage = this.onNewMessage.bind(this);
@@ -34,11 +25,27 @@ class App extends Component {
       console.log('Connected to server', event);
     }
 
-    websocket.onmessage = (event) => {
-      console.log('Incoming message', event.data);
-      const incomingMessage = JSON.parse(event.data);
-      const messages = this.state.messages.concat(incomingMessage);
-      this.setState({messages: messages});
+      websocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        switch(data.type) {
+        case 'incomingMessage':
+          // handle incoming message
+          console.log('Incoming message', data);
+          const incomingMessage = data;
+          const messages = this.state.messages.concat(incomingMessage);
+          this.setState({messages: messages});
+          break;
+        case 'incomingNotification':
+          // handle incoming notification
+          console.log('Incoming noti', data);
+          const incomingNotification = data;
+          const notifications = this.state.messages.concat(incomingNotification);
+          this.setState({ messages: notifications});
+          break;
+        default:
+          // show an error in the console if the message type is unknown
+          throw new Error('Unknown event type ' + event.data.type);
+      }
     }
     //setupApp(websocket);
   }
@@ -46,7 +53,7 @@ class App extends Component {
   onNewMessage(msg) {
     // if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
     //console.log('New message', msg.content);
-    const newMessage = {id: makeId(), username: msg.name, content: msg.content};
+    const newMessage = {type: 'postMessage' , username: msg.name, content: msg.content};
     this.socket.send(JSON.stringify(newMessage));
 
 
@@ -56,15 +63,17 @@ class App extends Component {
   }
 
   onNewUser(username) {
+    const notification = {type: 'postNotification' , content: 'User ' + this.state.currentUser.name + ' has changed their name to User ' + username }
+    this.socket.send(JSON.stringify(notification));
     this.setState({currentUser: { name: username}});
   }
-
+// 'User ' + this.state.currentUser.name + ' has changed their name to User ' + username
 
   render() {
     return (
       <div>
         <Navbar/>
-        <MessageList messages = {this.state.messages}/>
+        <MessageList notification = {this.state.notification} messages = {this.state.messages}/>
         <Chatbar currentUser = {this.state.currentUser}
                  onNewUser = {this.onNewUser}
                  onNewMessage = {this.onNewMessage}/>

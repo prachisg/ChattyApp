@@ -23,12 +23,29 @@ let sharedContent = '';
 wss.on('connection', (ws) => {
   console.log('Client connected');
 // The callback function in on('message') handles incoming message
-  ws.on('message',(data) => {
-    const output = JSON.parse(data);
-    output.id = uuidV3();   //Assigning id to the incoming message
-    console.log('ID', output.id, 'User', output.username, 'said', output.content);
-    sharedContent = output;
-    broadcast(sharedContent);
+  ws.on('message',(clientData) => {
+    const data = JSON.parse(clientData);
+
+
+    switch(data.type) {
+      case 'postMessage':
+      //Handle the postmessage from the client
+      data.type = 'incomingMessage';
+      data.id = uuidV3();   //Assigning id to the incoming message
+      console.log('ID', data.id, 'User', data.username, 'said', data.content);
+      sharedContent = data;
+      broadcast(sharedContent);
+        break;
+      case 'postNotification':
+        // handle post notification from client
+        data.type = 'incomingNotification';
+        sharedContent = data;
+        broadcast(sharedContent);
+        break;
+      default:
+        // show an error in the console if the message type is unknown
+        throw new Error('Unknown event type ' + data.type);
+    }
   })
   // Set up a callback for when a client closes the socket. This usually means they closed their browser.
   ws.on('close', () => console.log('Client disconnected'));
