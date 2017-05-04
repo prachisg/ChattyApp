@@ -10,7 +10,8 @@ class App extends Component {
 
     this.state = {
         currentUser: {name: 'Bob'}, // optional. if currentUser is not defined, it means the user is Anonymous
-        messages: []
+        messages: [],
+        activeUsers: {}
       }
 
       this.onNewMessage = this.onNewMessage.bind(this);
@@ -42,9 +43,13 @@ class App extends Component {
           const notifications = this.state.messages.concat(incomingNotification);
           this.setState({ messages: notifications});
           break;
+        case 'userCount':
+          // const count = data.count;
+          this.setState({activeUsers: data});
+          break;
         default:
           // show an error in the console if the message type is unknown
-          throw new Error('Unknown event type ' + event.data.type);
+          throw new Error('Unknown event type ' + data.type);
       }
     }
     //setupApp(websocket);
@@ -72,11 +77,11 @@ class App extends Component {
   render() {
     return (
       <div>
-        <Navbar/>
-        <MessageList notification = {this.state.notification} messages = {this.state.messages}/>
+        <Navbar activeUsers = {this.state.activeUsers} />
+        <MessageList messages = {this.state.messages} />
         <Chatbar currentUser = {this.state.currentUser}
                  onNewUser = {this.onNewUser}
-                 onNewMessage = {this.onNewMessage}/>
+                 onNewMessage = {this.onNewMessage} />
       </div>
     )
   }
