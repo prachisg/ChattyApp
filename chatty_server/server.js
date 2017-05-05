@@ -11,26 +11,24 @@ const server = express()
   .use(express.static('public'))
   .listen(PORT, '0.0.0.0', 'localhost', () => console.log(`Listening on ${ PORT }`));
 
-// Create the WebSockets server
+// Created the WebSockets server
 const wss = new SocketServer({ server });
 
 let sharedContent = '';
 
+let arraycolor = ['#a3fd7f', '#FFFF00', '#800000', '#2980B9'];
 
-// Set up a callback that will run when a client connects to the server
-// When a client connects they are assigned a socket, represented by
-// the ws parameter in the callback.
 //  The callback function handles connection
 wss.on('connection', (ws) => {
-  console.log('Client connected');
-  //console.log("WSS clients", typeof wss.clients);
- let length = 0;
- for( let client of wss.clients ){
-  length++;
- }
- console.log('Active users', length);
- const activeUsers = { 'type': 'userCount', 'count': length };
- sharedContent = activeUsers;
+  let newColor = arraycolor.pop();
+  if(!newColor) {
+    arraycolor = ['#a3fd7f', '#FFFF00', '#800000', '#2980B9'];
+    newColor = arraycolor.pop();
+  }
+  const color = {type: 'color', color: newColor};
+  ws.send(JSON.stringify(color));
+  const activeUsers = { 'type': 'userCount', 'count': wss.clients.size };
+  sharedContent = activeUsers;
   broadcast(sharedContent);
 
 // The callback function in on('message') handles incoming message
@@ -41,13 +39,12 @@ wss.on('connection', (ws) => {
 
     switch(data.type) {
       case 'postMessage':
-      //Handle the postmessage from the client
-      data.type = 'incomingMessage';
-      data.id = uuidV3();   //Assigning id to the incoming message
-      console.log('ID', data.id, 'User', data.username, 'said', data.content);
-      sharedContent = data;
-      broadcast(sharedContent);
-        break;
+        //Handle the postmessage from the client
+        data.type = 'incomingMessage';
+        data.id = uuidV3();   //Assigning id to the incoming message
+        sharedContent = data;
+        broadcast(sharedContent);
+      break;
       case 'postNotification':
         // handle post notification from client
         data.type = 'incomingNotification';
@@ -61,20 +58,14 @@ wss.on('connection', (ws) => {
   })
   // Set up a callback for when a client closes the socket. This usually means they closed their browser.
   ws.on('close', () => {
-    console.log('Client disconnected');
-    let length = 0;
-    for( let client of wss.clients ){
-      length++;
-    }
-    console.log('Active users', length);
-     const activeUsers = { 'type': 'userCount', 'count': length };
+     const activeUsers = { 'type': 'userCount', 'count': wss.clients.size };
      sharedContent = activeUsers;
      broadcast(sharedContent);
   });
 });
 
+//Broadcasts the message to all the clients
 function broadcast(data){
-  console.log("I am hit");
   for (let client of wss.clients){
     client.send(JSON.stringify(data));
   }

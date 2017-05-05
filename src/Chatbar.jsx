@@ -16,15 +16,13 @@ class Chatbar extends Component {
 
   onKeyPress(e){
     if (e.key === 'Enter') {
-      console.log('Enter pressed');
-      this.props.onNewMessage({name: this.props.currentUser.name, content: e.target.value});
-      e.target.value = "";
+      this.props.onNewMessage({user: this.props.currentUser, content: e.target.value});
+      e.target.value = '';
     }
   }
 
   onUserChanged(e){
     if (e.key === 'Enter') {
-      console.log('User changed');
       this.props.onNewUser(e.target.value);
     }
   }

@@ -12,7 +12,7 @@ class MessageList extends Component {
         } else {
           return (< Message
             key={ message.id }
-            username ={ message.username }
+            user ={ message.user }
             content={ message.content } />)
         }
 

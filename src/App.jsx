@@ -9,7 +9,7 @@ class App extends Component {
     super(props);
 
     this.state = {
-        currentUser: {name: 'Bob'}, // optional. if currentUser is not defined, it means the user is Anonymous
+        currentUser: {name: 'Bob', color: ''}, // optional. if currentUser is not defined, it means the user is Anonymous
         messages: [],
         activeUsers: {}
       }
@@ -29,50 +29,46 @@ class App extends Component {
       websocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         switch(data.type) {
-        case 'incomingMessage':
-          // handle incoming message
-          console.log('Incoming message', data);
-          const incomingMessage = data;
-          const messages = this.state.messages.concat(incomingMessage);
-          this.setState({messages: messages});
-          break;
-        case 'incomingNotification':
-          // handle incoming notification
-          console.log('Incoming noti', data);
-          const incomingNotification = data;
-          const notifications = this.state.messages.concat(incomingNotification);
-          this.setState({ messages: notifications});
-          break;
-        case 'userCount':
-          // const count = data.count;
-          this.setState({activeUsers: data});
-          break;
-        default:
-          // show an error in the console if the message type is unknown
-          throw new Error('Unknown event type ' + data.type);
-      }
+          case 'incomingMessage':
+            // handle incoming message
+            const incomingMessage = data;
+            const messages = this.state.messages.concat(incomingMessage);
+            this.setState({messages: messages});
+            break;
+          case 'incomingNotification':
+            // handle incoming notification
+            const incomingNotification = data;
+            const notifications = this.state.messages.concat(incomingNotification);
+            this.setState({ messages: notifications});
+            break;
+          case 'userCount':
+            // Handles the online users count
+            this.setState({activeUsers: data});
+            break;
+          case 'color':
+            // Handles color for every user
+            this.state.currentUser.color = data.color;
+            this.setState(this.state);
+            break;
+          default:
+            // show an error in the console if the message type is unknown
+            throw new Error('Unknown event type ' + data.type);
+        }
     }
     //setupApp(websocket);
   }
 
   onNewMessage(msg) {
-    // if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
-    //console.log('New message', msg.content);
-    const newMessage = {type: 'postMessage' , username: msg.name, content: msg.content};
+    const newMessage = {type: 'postMessage' , user: msg.user, content: msg.content};
     this.socket.send(JSON.stringify(newMessage));
-
-
-    // const output = 'User '+ this.state.messages[messages.length - 1].username + ' said ' + this.state.messages[messages.length - 1].content;
-    // console.log(output);
-    // this.socket.send(output);
   }
 
   onNewUser(username) {
     const notification = {type: 'postNotification' , content: 'User ' + this.state.currentUser.name + ' has changed their name to User ' + username }
     this.socket.send(JSON.stringify(notification));
-    this.setState({currentUser: { name: username}});
+     this.state.currentUser.name = username;
+    this.setState(this.state);
   }
-// 'User ' + this.state.currentUser.name + ' has changed their name to User ' + username
 
   render() {
     return (
@@ -85,20 +81,6 @@ class App extends Component {
       </div>
     )
   }
-}
-
-// function setupApp(socket) {
-
-// }
-
-function makeId() {
-  var text = '';
-  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-  for( var i=0; i < 5; i++ )
-      text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-  return text;
 }
 
 export default App;
